@@ -12,5 +12,8 @@ func InitializeProject() {
 		log.Fatal("Erro ao inicializar o banco de dados")
 	}
 
-	select {}
+	enforcer := AccessPermissionsConfig(db)
+	if err := GinConfig(db, enforcer); err != nil {
+		log.Fatalf("Erro ao iniciar servidor web: %v", err)
+	}
 }
