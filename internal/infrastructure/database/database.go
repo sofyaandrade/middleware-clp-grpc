@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"middleware/internal/domain/constants"
+	"middleware/internal/infrastructure/database/migrations"
+
 	"os"
 	"path/filepath"
 
@@ -20,6 +22,10 @@ func InitializeDatabase() *gorm.DB {
 	} else {
 		fmt.Printf("Banco conectado com sucesso")
 	}
+
+	migrations.RunMigrations(db)
+
+	migrations.InitializeBasicUser(db)
 
 	return db
 }
