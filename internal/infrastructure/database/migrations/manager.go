@@ -16,4 +16,10 @@ func RunMigrations(db *gorm.DB) {
 		dbInstance = db.Debug()
 	}
 	dbInstance.AutoMigrate(&models.User{})
+	dbInstance.AutoMigrate(&models.CLP{})
+	dbInstance.AutoMigrate(&models.TypeClp{})
+	dbInstance.AutoMigrate(&models.Tag{})
+	dbInstance.AutoMigrate(&models.TypeTag{})
+	dbInstance.AutoMigrate(&models.TypeOperation{})
+	dbInstance.AutoMigrate(&models.Swap{})
 }
