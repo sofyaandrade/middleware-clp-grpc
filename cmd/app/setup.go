@@ -13,6 +13,7 @@ func InitializeProject() {
 	}
 
 	enforcer := AccessPermissionsConfig(db)
+	go GinConfigFront()
 	if err := GinConfig(db, enforcer); err != nil {
 		log.Fatalf("Erro ao iniciar servidor web: %v", err)
 	}

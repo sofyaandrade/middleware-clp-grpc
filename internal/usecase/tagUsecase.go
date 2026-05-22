@@ -38,3 +38,7 @@ func (tu *TagUsecase) DeleteTag(id uint) error {
 func (tu *TagUsecase) ExistTagWithId(id uint) error {
 	return tu.TagReposiotry.ExistTagWithId(id)
 }
+
+func (tu *TagUsecase) TagsRealTime() (map[uint]map[uint]interface{}, error) {
+	return nil, nil //implementar com a conexão do clp
+}

@@ -91,16 +91,9 @@ func (tc TagController) UpdateTag(c *gin.Context) {
 }
 
 func (tc TagController) DeleteTag(c *gin.Context) {
-	var tag *models.Tag
 	id := c.Params.ByName("id")
 
-	err := c.ShouldBindJSON(&tag)
-	if err != nil {
-		fmt.Println("error.json")
-		return
-	}
-
-	_, err = tc.TagUsecase.SearchTagById(conversion.StringToUint(id))
+	_, err := tc.TagUsecase.SearchTagById(conversion.StringToUint(id))
 	if err != nil {
 		fmt.Println("not.exist")
 		return
@@ -113,4 +106,19 @@ func (tc TagController) DeleteTag(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, "delete.success")
+}
+
+func (tc TagController) TagsRealTime(c *gin.Context) {
+	Map, err := tc.TagUsecase.TagsRealTime()
+	if err != nil {
+		fmt.Println("not.exist")
+		return
+	}
+
+	if Map == nil {
+		fmt.Println("not.exist")
+		return
+	}
+
+	c.JSON(http.StatusOK, Map)
 }

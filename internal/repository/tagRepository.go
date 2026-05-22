@@ -23,13 +23,23 @@ func (tr TagRepository) CreateTag(tag *models.Tag) error {
 
 func (tr TagRepository) SearchAllTags() (*[]models.Tag, error) {
 	var tags *[]models.Tag
-	err := tr.Database.Model(&models.Tag{}).Preload("TypeTag").Preload("Swap").Preload("TypeOperation").Order("created_at asc").Find(&tags).Error
+	err := tr.Database.Model(&models.Tag{}).
+		Preload("Type").
+		Preload("Swap").
+		Preload("OperationType").
+		Order("created_at asc").
+		Find(&tags).Error
 	return tags, err
 }
 
 func (tr TagRepository) SearchTagById(id uint) (*models.Tag, error) {
 	var tag *models.Tag
-	err := tr.Database.Model(&models.Tag{}).Preload("TypeTag").Preload("Swap").Preload("TypeOperation").Order("created_at asc").First(&tag, id).Error
+	err := tr.Database.Model(&models.Tag{}).
+		Preload("Type").
+		Preload("Swap").
+		Preload("OperationType").
+		Order("created_at asc").
+		First(&tag, id).Error
 	return tag, err
 }
 
@@ -39,12 +49,16 @@ func (tr TagRepository) UpdateTag(id uint, tag *models.Tag) error {
 }
 
 func (tr TagRepository) DeleteTag(id uint) error {
-	var tag *models.Tag
-	err := tr.Database.Delete(&tag).Error
+	err := tr.Database.Delete(&models.Tag{}, id).Error
 	return err
 }
 
 func (tr TagRepository) ExistTagWithId(id uint) error {
-	err := tr.Database.Model(&models.Tag{}).Preload("TypeTag").Preload("Swap").Preload("TypeOperation").Order("created_at asc").First(id).Error
+	err := tr.Database.Model(&models.Tag{}).
+		Preload("Type").
+		Preload("Swap").
+		Preload("OperationType").
+		Order("created_at asc").
+		First(id).Error
 	return err
 }

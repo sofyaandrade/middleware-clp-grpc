@@ -16,6 +16,7 @@ func ClpRoute(db *gorm.DB, route *gin.RouterGroup) {
 	}
 	route.POST("/", mc.NewCLP)
 	route.GET("/", mc.SearchAllClps)
+	route.GET("/status/", mc.ClpsStatus)
 	route.GET("/:id/", mc.SearchClpById)
 	route.GET("/type/:idType/", mc.SearchClpByType)
 	route.PATCH("/:id/", mc.UpdateClp)

@@ -38,3 +38,7 @@ func (mr *CLPUsecase) UpdateClp(id uint, clp *models.CLP) error {
 func (mr *CLPUsecase) DeleteClp(id uint) error {
 	return mr.CLPReposiotry.DeleteClp(id)
 }
+
+func (mr *CLPUsecase) ClpsStatus() map[uint]bool {
+	return nil //implementar com a conexão clp
+}

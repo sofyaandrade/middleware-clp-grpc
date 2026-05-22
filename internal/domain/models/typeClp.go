@@ -4,5 +4,5 @@ import "gorm.io/gorm"
 
 type TypeClp struct {
 	gorm.Model
-	Description string
+	Description string `json:"description"`
 }

@@ -9,6 +9,7 @@ type CLPUsecase interface {
 	SearchClpByType(typeId uint) (*[]models.CLP, error)
 	UpdateClp(id uint, clp *models.CLP) error
 	DeleteClp(id uint) error
+	ClpsStatus() map[uint]bool
 }
 
 type CLPRepository interface {

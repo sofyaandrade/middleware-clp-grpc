@@ -19,4 +19,5 @@ func TagRoute(db *gorm.DB, route *gin.RouterGroup) {
 	route.GET("/:id/", mc.SearchTagById)
 	route.PATCH("/:id/", mc.UpdateTag)
 	route.DELETE("/:id/", mc.DeleteTag)
+	route.GET("/real-time/", mc.TagsRealTime)
 }

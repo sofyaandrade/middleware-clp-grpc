@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Tag struct {
 	gorm.Model
 	Description   string        `json:"description"`
-	ConsumerId    uint          `json:"consumer_id"`
+	ConsumerId    uint          `json:"consumer_id"` //tipo do clp - master ou slave
 	TypeID        uint          `json:"type_id"`
 	Type          TypeTag       `json:"type" gorm:"foreignKey:TypeID;references:ID"`
 	SwapID        uint          `json:"swap_id"`

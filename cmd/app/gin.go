@@ -47,7 +47,7 @@ func GinConfigFront() error {
 		return err
 	}
 
-	frontEndPort := fmt.Sprintf(":%s", 1710) //api port
+	frontEndPort := fmt.Sprintf(":%d", 2910) //api port
 	ginFrontEnd := gin.Default()
 
 	ginFrontEnd.Use(static.Serve("/", static.LocalFile(absPath, true)))
