@@ -3,6 +3,7 @@ package usecase
 import (
 	"middleware/internal/domain/interfaces"
 	"middleware/internal/domain/models"
+	"middleware/internal/infrastructure/jobs"
 )
 
 type TagUsecase struct {
@@ -40,5 +41,5 @@ func (tu *TagUsecase) ExistTagWithId(id uint) error {
 }
 
 func (tu *TagUsecase) TagsRealTime() (map[uint]map[uint]interface{}, error) {
-	return nil, nil //implementar com a conexão do clp
+	return jobs.ReadAllTagsRealTime()
 }

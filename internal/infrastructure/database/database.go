@@ -2,10 +2,8 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"middleware/internal/domain/constants"
 	"middleware/internal/infrastructure/database/migrations"
-
 	"os"
 	"path/filepath"
 
@@ -18,7 +16,7 @@ func InitializeDatabase() *gorm.DB {
 
 	db, err := gorm.Open(sqlite.Open(filepath.Join(pathDir, constants.DB_NAME)), &gorm.Config{})
 	if err != nil {
-		fmt.Printf("Não foi possível conectar com o banco de dados: %v", err)
+		fmt.Printf("Nao foi possivel conectar com o banco de dados: %v", err)
 	} else {
 		fmt.Printf("Banco conectado com sucesso")
 	}
@@ -35,11 +33,21 @@ func InitializeDatabase() *gorm.DB {
 }
 
 func GetPathDir() string {
+	workingDir, err := os.Getwd()
+	if err == nil {
+		if _, statErr := os.Stat(filepath.Join(workingDir, constants.DB_NAME)); statErr == nil {
+			return workingDir
+		}
+		if _, statErr := os.Stat(filepath.Join(workingDir, "go.mod")); statErr == nil {
+			return workingDir
+		}
+	}
+
 	execPath, err := os.Executable()
 	if err != nil {
-		log.Fatalf("Erro ao determinar o caminho do executável: %v", err)
+		fmt.Printf("Erro ao determinar o caminho do executavel: %v", err)
+		return workingDir
 	}
-	execDir := filepath.Dir(execPath)
 
-	return filepath.Join(execDir, "")
+	return filepath.Dir(execPath)
 }

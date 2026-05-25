@@ -3,6 +3,7 @@ package usecase
 import (
 	"middleware/internal/domain/interfaces"
 	"middleware/internal/domain/models"
+	"middleware/internal/infrastructure/jobs"
 )
 
 type CLPUsecase struct {
@@ -40,5 +41,5 @@ func (mr *CLPUsecase) DeleteClp(id uint) error {
 }
 
 func (mr *CLPUsecase) ClpsStatus() map[uint]bool {
-	return nil //implementar com a conexão clp
+	return jobs.ReadAllClpsStatus()
 }

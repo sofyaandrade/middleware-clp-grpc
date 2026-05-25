@@ -31,7 +31,7 @@ var listSwaps = []models.Swap{
 }
 
 func InitializeSwaps(db *gorm.DB) {
-	var swaps []models.TypeClp
+	var swaps []models.Swap
 
 	err := db.Find(&swaps).Error
 

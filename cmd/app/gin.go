@@ -43,7 +43,9 @@ func GinConfigFront() error {
 	absPath := filepath.Join(exeDir, "build")
 
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-		fmt.Println("")
+		fmt.Printf("Pasta do front-end nao encontrada em %s. Iniciando apenas a API.\n", absPath)
+		return nil
+	} else if err != nil {
 		return err
 	}
 
