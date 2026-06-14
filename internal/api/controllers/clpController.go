@@ -82,6 +82,10 @@ func (mc CLPController) SearchClpByType(c *gin.Context) {
 	c.JSON(http.StatusOK, clpList)
 }
 
+func (mc CLPController) ClpsStatus(c *gin.Context) {
+	c.JSON(http.StatusOK, mc.CLPUsecase.ClpsStatus())
+}
+
 func (mc CLPController) UpdateClp(c *gin.Context) {
 	var clp *models.CLP
 	id := c.Params.ByName("id")
@@ -108,16 +112,9 @@ func (mc CLPController) UpdateClp(c *gin.Context) {
 }
 
 func (mc CLPController) DeleteClp(c *gin.Context) {
-	var clp *models.CLP
 	id := c.Params.ByName("id")
 
-	err := c.ShouldBindJSON(&clp)
-	if err != nil {
-		fmt.Println("error.json")
-		return
-	}
-
-	_, err = mc.CLPUsecase.SearchClpById(conversion.StringToUint(id))
+	_, err := mc.CLPUsecase.SearchClpById(conversion.StringToUint(id))
 	if err != nil {
 		fmt.Println("not.exist")
 		return

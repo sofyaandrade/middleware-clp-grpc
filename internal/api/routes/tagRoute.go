@@ -2,6 +2,7 @@ package routes
 
 import (
 	"middleware/internal/api/controllers"
+	"middleware/internal/domain/interfaces"
 	"middleware/internal/repository"
 	"middleware/internal/usecase"
 
@@ -9,14 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func TagRoute(db *gorm.DB, route *gin.RouterGroup) {
+func TagRoute(db *gorm.DB, route *gin.RouterGroup, reloadNotifier interfaces.CLPReloadNotifier) {
 	mr := repository.NewTagRepository(db)
 	mc := &controllers.TagController{
-		TagUsecase: usecase.NewTagUsecase(mr),
+		TagUsecase: usecase.NewTagUsecase(mr, reloadNotifier),
 	}
 	route.POST("/", mc.NewTag)
 	route.GET("/", mc.SearchAllTags)
 	route.GET("/:id/", mc.SearchTagById)
 	route.PATCH("/:id/", mc.UpdateTag)
 	route.DELETE("/:id/", mc.DeleteTag)
+	route.GET("/real-time/", mc.TagsRealTime)
 }

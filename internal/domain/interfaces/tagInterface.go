@@ -9,6 +9,7 @@ type TagUsecase interface {
 	UpdateTag(id uint, tag *models.Tag) error
 	DeleteTag(id uint) error
 	ExistTagWithId(id uint) error
+	TagsRealTime() (map[uint]map[uint]interface{}, error)
 }
 
 type TagRepository interface {
