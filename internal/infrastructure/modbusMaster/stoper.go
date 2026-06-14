@@ -23,10 +23,8 @@ func (s *Service) unregisterCLP(clp models.CLP, channel chan CommandMaster, hand
 	delete(s.clients, clp.ID)
 	delete(s.handlers, clp.ID)
 	delete(s.channels, clp.ID)
-	delete(s.quantityTags, clp.ID)
-	delete(s.signaturesTags, clp.ID)
 	delete(s.cancelFuncs, clp.ID)
-	delete(s.settings, clp.ID)
+	delete(s.reloadRequests, clp.ID)
 
 	jobs.MutexMaster.Lock()
 	delete(jobs.TagsByClpMaster, clp.ID)
@@ -59,6 +57,12 @@ func (s *Service) stopMissingCLPs(activeCLPs map[uint]struct{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	for clpID := range s.reloadRequests {
+		if _, ok := activeCLPs[clpID]; !ok {
+			delete(s.reloadRequests, clpID)
+		}
+	}
+
 	for clpID, cancel := range s.cancelFuncs {
 		if _, ok := activeCLPs[clpID]; ok {
 			continue
@@ -66,6 +70,7 @@ func (s *Service) stopMissingCLPs(activeCLPs map[uint]struct{}) {
 
 		cancel()
 		delete(s.cancelFuncs, clpID)
+		delete(s.reloadRequests, clpID)
 
 		if channel, ok := s.channels[clpID]; ok {
 			close(channel)

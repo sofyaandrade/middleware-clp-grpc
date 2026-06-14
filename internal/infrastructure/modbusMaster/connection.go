@@ -3,25 +3,15 @@ package modbusmaster
 import (
 	"context"
 	"fmt"
-	"hash/fnv"
 	"middleware/internal/domain/conversion"
 	"middleware/internal/domain/interfaces"
 	"middleware/internal/domain/models"
 	"middleware/internal/infrastructure/jobs"
-	"sort"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/goburrow/modbus"
 )
-
-type SettingsCLPMaster struct {
-	IP      string
-	Port    int
-	Id      uint
-	SlaveId byte
-}
 
 const maxRegistersPerRead int = 120
 const maxCoilsPerRead int = 2000
@@ -59,10 +49,9 @@ type Service struct {
 	clients        map[uint]modbus.Client
 	handlers       map[uint]*modbus.TCPClientHandler
 	channels       map[uint]chan CommandMaster
-	quantityTags   map[uint]int
-	signaturesTags map[uint]uint64
 	cancelFuncs    map[uint]context.CancelFunc
-	settings       map[uint]SettingsCLPMaster
+	reloadRequests map[uint]struct{}
+	reloadSignal   chan struct{}
 }
 
 func NewService(repository interfaces.CLPRepository) *Service {
@@ -71,10 +60,25 @@ func NewService(repository interfaces.CLPRepository) *Service {
 		clients:        make(map[uint]modbus.Client),
 		handlers:       make(map[uint]*modbus.TCPClientHandler),
 		channels:       make(map[uint]chan CommandMaster),
-		quantityTags:   make(map[uint]int),
-		signaturesTags: make(map[uint]uint64),
 		cancelFuncs:    make(map[uint]context.CancelFunc),
-		settings:       make(map[uint]SettingsCLPMaster),
+		reloadRequests: make(map[uint]struct{}),
+		reloadSignal:   make(chan struct{}, 1),
+	}
+}
+
+func (s *Service) RequestCLPReload(clpID uint) {
+	if clpID == 0 {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.reloadRequests[clpID] = struct{}{}
+
+	select {
+	case s.reloadSignal <- struct{}{}:
+	default:
 	}
 }
 
@@ -89,6 +93,8 @@ func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 			s.stopAll()
 			return
+		case <-s.reloadSignal:
+			s.syncCLPs(ctx, wg)
 		case <-ticker.C:
 			s.syncCLPs(ctx, wg)
 		}
@@ -113,35 +119,13 @@ func (s *Service) reloadCLPIfNeeded(ctx context.Context, wg *sync.WaitGroup, clp
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	tagCount := len(clp.Tags)
-	oldCount, countExists := s.quantityTags[clp.ID]
-	currentSignaturesTags := createAssignaturesClpMaster(clp.Tags)
-	previousSignaturesTags, signaturesExists := s.signaturesTags[clp.ID]
-
-	currentSettings := SettingsCLPMaster{
-		IP:      clp.Ip,
-		Port:    clp.Port,
-		Id:      clp.ID,
-		SlaveId: normalizeSlaveIDMaster(clp.IdPlc),
-	}
-
-	previousSettings, settingsExists := s.settings[clp.ID]
-
-	needsReload := false
-
-	if !countExists || tagCount != oldCount {
-		needsReload = true
-	}
-
-	if !settingsExists || currentSettings != previousSettings {
-		needsReload = true
-	}
-
-	if !signaturesExists || currentSignaturesTags != previousSignaturesTags {
-		needsReload = true
-	}
+	_, running := s.channels[clp.ID]
+	_, requestedReload := s.reloadRequests[clp.ID]
+	needsReload := !running || requestedReload
 
 	if needsReload {
+		delete(s.reloadRequests, clp.ID)
+
 		if cancel, ok := s.cancelFuncs[clp.ID]; ok {
 			cancel()
 			delete(s.cancelFuncs, clp.ID)
@@ -151,10 +135,6 @@ func (s *Service) reloadCLPIfNeeded(ctx context.Context, wg *sync.WaitGroup, clp
 			close(channel)
 			delete(s.channels, clp.ID)
 		}
-
-		s.quantityTags[clp.ID] = tagCount
-		s.signaturesTags[clp.ID] = currentSignaturesTags
-		s.settings[clp.ID] = currentSettings
 
 		channel := make(chan CommandMaster, 100)
 		s.channels[clp.ID] = channel
@@ -382,37 +362,4 @@ func updateTagsClpsMaster(client modbus.Client, clpId uint, tags []*models.Tag) 
 	jobs.TagsByClpMaster[clpId] = mapByClp
 	jobs.MutexMaster.Unlock()
 	return err
-}
-
-func createAssignaturesClpMaster(tags []*models.Tag) uint64 {
-	if len(tags) == 0 {
-		return 0
-	}
-
-	orderedTags := make([]*models.Tag, 0, len(tags))
-	for _, tag := range tags {
-		if tag != nil {
-			orderedTags = append(orderedTags, tag)
-		}
-	}
-	sort.Slice(orderedTags, func(i, j int) bool {
-		return orderedTags[i].ID < orderedTags[j].ID
-	})
-
-	hash := fnv.New64a()
-	for _, tag := range orderedTags {
-		_, _ = fmt.Fprintf(
-			hash,
-			"%d|%d|%s|%d|%d|%d|%s|%s;",
-			tag.ID,
-			tag.IdClp,
-			strings.ToLower(strings.TrimSpace(tag.Type.Description)),
-			tag.TypeID,
-			tag.Offset,
-			tag.OperationID,
-			strings.ToLower(strings.TrimSpace(tag.OperationType.Description)),
-			strings.ToUpper(strings.TrimSpace(tag.Swap.Description)),
-		)
-	}
-	return hash.Sum64()
 }

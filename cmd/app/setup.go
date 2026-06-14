@@ -27,8 +27,9 @@ func InitializeProject() {
 	var jobsWG sync.WaitGroup
 
 	clpRepository := repository.NewCLPRepository(db)
+	modbusMasterService := modbusmaster.NewService(clpRepository)
 	clpManager := clp.NewManager(
-		modbusmaster.NewService(clpRepository),
+		modbusMasterService,
 	)
 	clpManager.Start(appCtx, &jobsWG)
 
@@ -46,7 +47,7 @@ func InitializeProject() {
 	}()
 
 	go func() {
-		if err := GinConfig(db, enforcer); err != nil {
+		if err := GinConfig(db, enforcer, modbusMasterService); err != nil {
 			serverErrorChan <- fmt.Errorf("erro ao iniciar servidor web: %w", err)
 		}
 	}()

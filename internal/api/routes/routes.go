@@ -2,6 +2,7 @@ package routes
 
 import (
 	"middleware/internal/api/middlewares"
+	"middleware/internal/domain/interfaces"
 
 	"github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
@@ -9,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforcer) {
+func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforcer, reloadNotifier interfaces.CLPReloadNotifier) {
 
 	secretKey := viper.GetString("ACCESS_TOKEN")
 
@@ -21,7 +22,7 @@ func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforc
 
 	protectedEquipamentoRouter := router.Group("/clps")
 	protectedEquipamentoRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
-	ClpRoute(db, protectedEquipamentoRouter)
+	ClpRoute(db, protectedEquipamentoRouter, reloadNotifier)
 
 	protectedUsuariosRouter := router.Group("/users")
 	protectedUsuariosRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
@@ -29,7 +30,7 @@ func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforc
 
 	protectedTagRouter := router.Group("/tags")
 	protectedTagRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
-	TagRoute(db, protectedTagRouter)
+	TagRoute(db, protectedTagRouter, reloadNotifier)
 
 	protectedSwapRouter := router.Group("/swaps")
 	protectedSwapRouter.Use(middlewares.JwtAuthMiddleware(secretKey))

@@ -7,17 +7,24 @@ import (
 )
 
 type CLPUsecase struct {
-	CLPReposiotry interfaces.CLPRepository
+	CLPReposiotry  interfaces.CLPRepository
+	ReloadNotifier interfaces.CLPReloadNotifier
 }
 
-func NewCLPUsecase(CLPRepository interfaces.CLPRepository) interfaces.CLPUsecase {
+func NewCLPUsecase(CLPRepository interfaces.CLPRepository, reloadNotifier interfaces.CLPReloadNotifier) interfaces.CLPUsecase {
 	return &CLPUsecase{
-		CLPReposiotry: CLPRepository,
+		CLPReposiotry:  CLPRepository,
+		ReloadNotifier: reloadNotifier,
 	}
 }
 
 func (mr *CLPUsecase) CreateClp(clp *models.CLP) error {
-	return mr.CLPReposiotry.CreateClp(clp)
+	if err := mr.CLPReposiotry.CreateClp(clp); err != nil {
+		return err
+	}
+
+	mr.requestCLPReload(clp.ID)
+	return nil
 }
 
 func (mr *CLPUsecase) SearchAllClps() (*[]models.CLP, error) {
@@ -33,13 +40,29 @@ func (mr *CLPUsecase) SearchClpByType(typeId uint) (*[]models.CLP, error) {
 }
 
 func (mr *CLPUsecase) UpdateClp(id uint, clp *models.CLP) error {
-	return mr.CLPReposiotry.UpdateClp(id, clp)
+	if err := mr.CLPReposiotry.UpdateClp(id, clp); err != nil {
+		return err
+	}
+
+	mr.requestCLPReload(id)
+	return nil
 }
 
 func (mr *CLPUsecase) DeleteClp(id uint) error {
-	return mr.CLPReposiotry.DeleteClp(id)
+	if err := mr.CLPReposiotry.DeleteClp(id); err != nil {
+		return err
+	}
+
+	mr.requestCLPReload(id)
+	return nil
 }
 
 func (mr *CLPUsecase) ClpsStatus() map[uint]bool {
 	return jobs.ReadAllClpsStatus()
+}
+
+func (mr *CLPUsecase) requestCLPReload(clpID uint) {
+	if mr.ReloadNotifier != nil {
+		mr.ReloadNotifier.RequestCLPReload(clpID)
+	}
 }

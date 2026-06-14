@@ -20,3 +20,7 @@ type CLPRepository interface {
 	UpdateClp(id uint, clp *models.CLP) error
 	DeleteClp(id uint) error
 }
+
+type CLPReloadNotifier interface {
+	RequestCLPReload(clpID uint)
+}

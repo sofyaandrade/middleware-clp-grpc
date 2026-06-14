@@ -2,6 +2,7 @@ package routes
 
 import (
 	"middleware/internal/api/controllers"
+	"middleware/internal/domain/interfaces"
 	"middleware/internal/repository"
 	"middleware/internal/usecase"
 
@@ -9,10 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func ClpRoute(db *gorm.DB, route *gin.RouterGroup) {
+func ClpRoute(db *gorm.DB, route *gin.RouterGroup, reloadNotifier interfaces.CLPReloadNotifier) {
 	mr := repository.NewCLPRepository(db)
 	mc := &controllers.CLPController{
-		CLPUsecase: usecase.NewCLPUsecase(mr),
+		CLPUsecase: usecase.NewCLPUsecase(mr, reloadNotifier),
 	}
 	route.POST("/", mc.NewCLP)
 	route.GET("/", mc.SearchAllClps)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"middleware/internal/api/middlewares"
 	"middleware/internal/api/routes"
+	"middleware/internal/domain/interfaces"
 	"os"
 	"path/filepath"
 
@@ -15,12 +16,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func GinConfig(db *gorm.DB, enforcer *casbin.Enforcer) error {
+func GinConfig(db *gorm.DB, enforcer *casbin.Enforcer, reloadNotifier interfaces.CLPReloadNotifier) error {
 	serverPort := ":1710" //api port
 
 	gin := gin.Default()
 	gin.Use(middlewares.CORSMiddleware())
-	routes.RouteConfiguration(db, gin, enforcer)
+	routes.RouteConfiguration(db, gin, enforcer, reloadNotifier)
 
 	gin.GET("/documentacao/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
