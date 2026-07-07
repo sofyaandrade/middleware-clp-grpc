@@ -26,15 +26,7 @@ func (s *Service) unregisterCLP(clp models.CLP, channel chan CommandMaster, hand
 	delete(s.cancelFuncs, clp.ID)
 	delete(s.reloadRequests, clp.ID)
 
-	jobs.MutexMaster.Lock()
-	delete(jobs.TagsByClpMaster, clp.ID)
-	jobs.MutexMaster.Unlock()
-
-	for _, tag := range clp.Tags {
-		if tag != nil {
-			jobs.TagsByIDMaster.Delete(tag.ID)
-		}
-	}
+	jobs.DeleteCLP(clp.ID)
 	jobs.StatusClpRealTimeSync.Delete(clp.ID)
 }
 

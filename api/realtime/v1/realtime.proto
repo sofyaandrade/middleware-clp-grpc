@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package middleware.realtime.v1;
+
+option go_package = "middleware/api/realtime/v1;realtimev1";
+
+// RealtimeTagService exposes the latest values read from the PLCs.
+service RealtimeTagService {
+  // StreamTagValues sends the current cache and then only values that change.
+  rpc StreamTagValues(StreamTagValuesRequest) returns (stream TagValue);
+}
+
+message StreamTagValuesRequest {}
+
+enum TagQuality {
+  TAG_QUALITY_UNSPECIFIED = 0;
+  TAG_QUALITY_GOOD = 1;
+  TAG_QUALITY_STALE = 2;
+  TAG_QUALITY_BAD = 3;
+}
+
+message TagValue {
+  uint64 equipment_id = 1;
+  uint64 tag_id = 2;
+
+  oneof value {
+    bool bool_value = 3;
+    sint64 int_value = 4;
+    uint64 uint_value = 5;
+    float float_value = 6;
+    double double_value = 7;
+    string string_value = 8;
+  }
+
+  TagQuality quality = 9;
+  // Zero means that this tag has never been read successfully.
+  int64 last_successful_read_unix_nano = 10;
+}

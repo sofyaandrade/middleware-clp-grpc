@@ -152,6 +152,7 @@ func (s *Service) reloadCLPIfNeeded(ctx context.Context, wg *sync.WaitGroup, clp
 
 func (s *Service) runCLP(ctx context.Context, clp models.CLP, channel chan CommandMaster) {
 	var handler *modbus.TCPClientHandler
+	initializeCLPTagCache(clp)
 	defer func() {
 		s.unregisterCLP(clp, channel, handler)
 	}()
@@ -174,6 +175,7 @@ RETRY:
 		if err != nil {
 			//logar o erro
 			jobs.StatusClpRealTimeSync.Store(clp.ID, false)
+			jobs.MarkCLPUnavailable(clp.ID)
 
 			select {
 			case <-ctx.Done():
@@ -203,6 +205,7 @@ RETRY:
 				err := ExecuteCommandMaster(client, clp.ID, cmd)
 				if err != nil && isConnectionError(err) {
 					jobs.StatusClpRealTimeSync.Store(clp.ID, false)
+					jobs.MarkCLPUnavailable(clp.ID)
 					needsRetry = true
 				}
 			default:
@@ -233,6 +236,7 @@ RETRY:
 				err := ExecuteCommandMaster(client, clp.ID, cmd)
 				if err != nil && isConnectionError(err) {
 					jobs.StatusClpRealTimeSync.Store(clp.ID, false)
+					jobs.MarkCLPUnavailable(clp.ID)
 					needsRetry = true
 				}
 			case <-ticker.C:
@@ -245,6 +249,7 @@ RETRY:
 					err := ExecuteCommandMaster(client, clp.ID, cmd)
 					if err != nil && isConnectionError(err) {
 						jobs.StatusClpRealTimeSync.Store(clp.ID, false)
+						jobs.MarkCLPUnavailable(clp.ID)
 						needsRetry = true
 					}
 				default:
@@ -283,17 +288,7 @@ func ExecuteCommandMaster(client modbus.Client, clpId uint, cmd CommandMaster) e
 			readTags = []*models.Tag{cmd.Tag}
 		}
 
-		previousValue := make(map[uint]interface{})
-		for _, tag := range readTags {
-			if tag == nil {
-				continue
-			}
-			if v, ok := jobs.TagsByIDMaster.Load(tag.ID); ok {
-				previousValue[tag.ID] = v
-			}
-		}
-
-		values, err := ReadTagsMaster(client, readTags, previousValue)
+		values, err := ReadTagsMaster(client, readTags, nil)
 		if err == nil {
 			cmd.Response <- values
 			cmd.Erro <- nil
@@ -325,25 +320,20 @@ func ExecuteCommandMaster(client modbus.Client, clpId uint, cmd CommandMaster) e
 }
 
 func updateTagsClpsMaster(client modbus.Client, clpId uint, tags []*models.Tag) error {
-	mapByClp := make(map[uint]interface{})
+	tagIDs := make([]uint, 0, len(tags))
+	for _, tag := range tags {
+		if tag != nil {
+			tagIDs = append(tagIDs, tag.ID)
+		}
+	}
+
 	if len(tags) == 0 {
-		jobs.MutexMaster.Lock()
-		jobs.TagsByClpMaster[clpId] = mapByClp
-		jobs.MutexMaster.Unlock()
+		jobs.ApplyPoll(clpId, tagIDs, nil, time.Now())
 		return nil
 	}
 
-	previousValue := make(map[uint]interface{}, len(tags))
-	for _, tag := range tags {
-		if tag == nil {
-			continue
-		}
-		if v, ok := jobs.TagsByIDMaster.Load(tag.ID); ok {
-			previousValue[tag.ID] = v
-		}
-	}
-
-	values, err := ReadTagsMaster(client, tags, previousValue)
+	values, err := ReadTagsMaster(client, tags, nil)
+	jobs.ApplyPoll(clpId, tagIDs, values, time.Now())
 	if err != nil {
 		//loggar erro
 		if isConnectionError(err) {
@@ -353,13 +343,5 @@ func updateTagsClpsMaster(client modbus.Client, clpId uint, tags []*models.Tag) 
 		jobs.StatusClpRealTimeSync.Store(clpId, true)
 	}
 
-	for tagID, value := range values {
-		mapByClp[tagID] = value
-		jobs.TagsByIDMaster.Store(tagID, value)
-	}
-
-	jobs.MutexMaster.Lock()
-	jobs.TagsByClpMaster[clpId] = mapByClp
-	jobs.MutexMaster.Unlock()
 	return err
 }

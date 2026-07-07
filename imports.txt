@@ -1,0 +1,35 @@
+1. COMANDO
+go list -f '{{range .Imports}}{{println .}}{{end}}' ./... | Sort-Object -Unique
+
+2. Bibliotecas 26/05
+bytes
+context
+encoding/binary
+encoding/json
+fmt
+github.com/casbin/casbin/v3
+github.com/casbin/casbin/v3/model
+github.com/casbin/gorm-adapter/v3
+github.com/gin-gonic/contrib/static
+github.com/gin-gonic/gin
+github.com/glebarez/sqlite
+github.com/goburrow/modbus - esse
+github.com/golang-jwt/jwt
+github.com/spf13/viper
+github.com/swaggo/files
+github.com/swaggo/gin-swagger
+golang.org/x/crypto/bcrypt
+gorm.io/gorm - esse
+io
+log
+math
+net/http - esse 
+os
+os/signal - esse
+path/filepath
+sort
+strconv
+strings
+sync - esse 
+syscall - esse 
+time
