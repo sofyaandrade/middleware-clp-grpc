@@ -35,7 +35,7 @@ func InitializeProject() {
 
 	enforcer := AccessPermissionsConfig(db)
 
-	serverErrorChan := make(chan error, 2)
+	serverErrorChan := make(chan error, 3)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(quit)
@@ -49,6 +49,12 @@ func InitializeProject() {
 	go func() {
 		if err := GinConfig(db, enforcer, modbusMasterService); err != nil {
 			serverErrorChan <- fmt.Errorf("erro ao iniciar servidor web: %w", err)
+		}
+	}()
+
+	go func() {
+		if err := GRPCConfig(appCtx); err != nil {
+			serverErrorChan <- fmt.Errorf("erro ao iniciar servidor gRPC: %w", err)
 		}
 	}()
 
