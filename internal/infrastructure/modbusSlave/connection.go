@@ -2,15 +2,13 @@ package modbusSlave
 
 import (
 	"context"
-	"fmt"
 	"middleware/internal/domain/conversion"
 	"middleware/internal/domain/interfaces"
 	"middleware/internal/domain/models"
 	"middleware/internal/infrastructure/jobs"
+	"net"
 	"sync"
 	"time"
-
-	"github.com/goburrow/modbus"
 )
 
 const maxRegistersPerRead int = 120
@@ -46,8 +44,8 @@ type Service struct {
 	repository interfaces.CLPRepository
 
 	mu             sync.Mutex
-	clients        map[uint]modbus.Client
-	handlers       map[uint]*modbus.TCPClientHandler
+	clients        map[uint]modbusSlaveClient
+	handlers       map[uint]*slaveTCPServer
 	channels       map[uint]chan CommandSlave
 	cancelFuncs    map[uint]context.CancelFunc
 	reloadRequests map[uint]struct{}
@@ -57,8 +55,8 @@ type Service struct {
 func NewService(repository interfaces.CLPRepository) *Service {
 	return &Service{
 		repository:     repository,
-		clients:        make(map[uint]modbus.Client),
-		handlers:       make(map[uint]*modbus.TCPClientHandler),
+		clients:        make(map[uint]modbusSlaveClient),
+		handlers:       make(map[uint]*slaveTCPServer),
 		channels:       make(map[uint]chan CommandSlave),
 		cancelFuncs:    make(map[uint]context.CancelFunc),
 		reloadRequests: make(map[uint]struct{}),
@@ -102,7 +100,7 @@ func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *Service) syncCLPs(ctx context.Context, wg *sync.WaitGroup) {
-	clps, err := s.repository.SearchClpByType(1)
+	clps, err := s.repository.SearchClpByType(2)
 	if err != nil {
 		return
 	}
@@ -151,17 +149,14 @@ func (s *Service) reloadCLPIfNeeded(ctx context.Context, wg *sync.WaitGroup, clp
 }
 
 func (s *Service) runCLP(ctx context.Context, clp models.CLP, channel chan CommandSlave) {
-	var handler *modbus.TCPClientHandler
+	var server *slaveTCPServer
 	initializeCLPTagCache(clp)
 	defer func() {
-		s.unregisterCLP(clp, channel, handler)
+		s.unregisterCLP(clp, channel, server)
 	}()
 
-	adress := fmt.Sprintf("%s:%s", clp.Ip, conversion.IntToString(clp.Port))
-	handler = modbus.NewTCPClientHandler(adress)
-	handler.SlaveId = normalizeSlaveIDSlave(clp.IdPlc)
-	handler.Timeout = modbusSlaveTimeout
-	handler.IdleTimeout = modbusSlaveIdleTimeout
+	address := net.JoinHostPort(clp.Ip, conversion.IntToString(clp.Port))
+	server = newSlaveTCPServer(address, normalizeSlaveIDSlave(clp.IdPlc), clp.ID, clp.Tags, modbusSlaveTimeout)
 
 RETRY:
 	for {
@@ -171,9 +166,8 @@ RETRY:
 		default:
 		}
 
-		err := ConnectWithRetry(ctx, handler)
+		err := ConnectWithRetry(ctx, server)
 		if err != nil {
-			//logar o erro
 			jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 			jobs.MarkCLPUnavailable(clp.ID)
 
@@ -185,12 +179,12 @@ RETRY:
 			}
 		}
 
-		client := modbus.NewClient(handler)
-
 		s.mu.Lock()
-		s.clients[clp.ID] = client
-		s.handlers[clp.ID] = handler
+		s.clients[clp.ID] = server
+		s.handlers[clp.ID] = server
 		s.mu.Unlock()
+		server.PublishTags()
+		jobs.StatusClpRealTimeSync.Store(clp.ID, true)
 
 		ticker := time.NewTicker(1 * time.Second)
 		needsRetry := false
@@ -202,7 +196,7 @@ RETRY:
 					ticker.Stop()
 					return
 				}
-				err := ExecuteCommandSlave(client, clp.ID, cmd)
+				err := ExecuteCommandSlave(server, clp.ID, cmd)
 				if err != nil && isConnectionError(err) {
 					jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 					jobs.MarkCLPUnavailable(clp.ID)
@@ -213,7 +207,7 @@ RETRY:
 
 			if needsRetry {
 				ticker.Stop()
-				handler.Close()
+				server.Close()
 
 				select {
 				case <-ctx.Done():
@@ -233,12 +227,16 @@ RETRY:
 					ticker.Stop()
 					return
 				}
-				err := ExecuteCommandSlave(client, clp.ID, cmd)
+				err := ExecuteCommandSlave(server, clp.ID, cmd)
 				if err != nil && isConnectionError(err) {
 					jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 					jobs.MarkCLPUnavailable(clp.ID)
 					needsRetry = true
 				}
+			case <-server.Errors():
+				jobs.StatusClpRealTimeSync.Store(clp.ID, false)
+				jobs.MarkCLPUnavailable(clp.ID)
+				needsRetry = true
 			case <-ticker.C:
 				select {
 				case cmd, ok := <-channel:
@@ -246,18 +244,14 @@ RETRY:
 						ticker.Stop()
 						return
 					}
-					err := ExecuteCommandSlave(client, clp.ID, cmd)
+					err := ExecuteCommandSlave(server, clp.ID, cmd)
 					if err != nil && isConnectionError(err) {
 						jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 						jobs.MarkCLPUnavailable(clp.ID)
 						needsRetry = true
 					}
 				default:
-					err := updateTagsClpsSlave(client, clp.ID, clp.Tags)
-					if err != nil && isConnectionError(err) {
-						jobs.StatusClpRealTimeSync.Store(clp.ID, false)
-						needsRetry = true
-					}
+					server.PublishTags()
 				}
 			}
 
@@ -267,7 +261,7 @@ RETRY:
 			}
 
 			ticker.Stop()
-			handler.Close()
+			server.Close()
 
 			select {
 			case <-ctx.Done():
@@ -280,7 +274,7 @@ RETRY:
 	}
 }
 
-func ExecuteCommandSlave(client modbus.Client, clpId uint, cmd CommandSlave) error {
+func ExecuteCommandSlave(client modbusSlaveClient, clpId uint, cmd CommandSlave) error {
 	var err error
 	if cmd.Value == nil {
 		readTags := cmd.Tags
@@ -319,7 +313,7 @@ func ExecuteCommandSlave(client modbus.Client, clpId uint, cmd CommandSlave) err
 	return err
 }
 
-func updateTagsClpsSlave(client modbus.Client, clpId uint, tags []*models.Tag) error {
+func updateTagsClpsSlave(client modbusSlaveClient, clpId uint, tags []*models.Tag) error {
 	tagIDs := make([]uint, 0, len(tags))
 	for _, tag := range tags {
 		if tag != nil {
@@ -335,7 +329,6 @@ func updateTagsClpsSlave(client modbus.Client, clpId uint, tags []*models.Tag) e
 	values, err := ReadTagsSlave(client, tags, nil)
 	jobs.ApplyPoll(clpId, tagIDs, values, time.Now())
 	if err != nil {
-		//loggar erro
 		if isConnectionError(err) {
 			jobs.StatusClpRealTimeSync.Store(clpId, false)
 		}

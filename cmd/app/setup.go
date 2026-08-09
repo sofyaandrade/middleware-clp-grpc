@@ -7,12 +7,25 @@ import (
 	"middleware/internal/infrastructure/clp"
 	"middleware/internal/infrastructure/database"
 	modbusmaster "middleware/internal/infrastructure/modbusMaster"
+	modbusslave "middleware/internal/infrastructure/modbusSlave"
 	"middleware/internal/repository"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 )
+
+type reloadNotifierGroup []interface {
+	RequestCLPReload(clpID uint)
+}
+
+func (r reloadNotifierGroup) RequestCLPReload(clpID uint) {
+	for _, notifier := range r {
+		if notifier != nil {
+			notifier.RequestCLPReload(clpID)
+		}
+	}
+}
 
 func InitializeProject() {
 
@@ -28,12 +41,18 @@ func InitializeProject() {
 
 	clpRepository := repository.NewCLPRepository(db)
 	modbusMasterService := modbusmaster.NewService(clpRepository)
+	modbusSlaveService := modbusslave.NewService(clpRepository)
 	clpManager := clp.NewManager(
 		modbusMasterService,
+		modbusSlaveService,
 	)
 	clpManager.Start(appCtx, &jobsWG)
 
 	enforcer := AccessPermissionsConfig(db)
+	reloadNotifier := reloadNotifierGroup{
+		modbusMasterService,
+		modbusSlaveService,
+	}
 
 	serverErrorChan := make(chan error, 3)
 	quit := make(chan os.Signal, 1)
@@ -47,7 +66,7 @@ func InitializeProject() {
 	}()
 
 	go func() {
-		if err := GinConfig(db, enforcer, modbusMasterService); err != nil {
+		if err := GinConfig(db, enforcer, reloadNotifier); err != nil {
 			serverErrorChan <- fmt.Errorf("erro ao iniciar servidor web: %w", err)
 		}
 	}()

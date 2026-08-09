@@ -3,11 +3,9 @@ package modbusSlave
 import (
 	"fmt"
 	"middleware/internal/domain/models"
-
-	"github.com/goburrow/modbus"
 )
 
-func ReadTagsSlave(client modbus.Client, tags []*models.Tag, _ map[uint]interface{}) (map[uint]interface{}, error) {
+func ReadTagsSlave(client modbusSlaveClient, tags []*models.Tag, _ map[uint]interface{}) (map[uint]interface{}, error) {
 	tagsMap := make(map[uint]interface{})
 	tagsByOperation := groupTagsByOperationSlave(tags)
 	if len(tagsByOperation) == 0 {

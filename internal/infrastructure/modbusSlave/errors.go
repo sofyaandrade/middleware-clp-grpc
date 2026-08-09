@@ -4,19 +4,17 @@ import (
 	"context"
 	"strings"
 	"time"
-
-	"github.com/goburrow/modbus"
 )
 
-func ConnectWithRetry(ctx context.Context, handler *modbus.TCPClientHandler) error {
-	handler.Close()
+func ConnectWithRetry(ctx context.Context, client slaveConnector) error {
+	client.Close()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			err := handler.Connect()
+			err := client.Connect()
 			if err == nil {
 				return nil
 			}

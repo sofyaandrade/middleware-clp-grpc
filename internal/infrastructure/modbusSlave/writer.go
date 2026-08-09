@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"middleware/internal/domain/models"
 	"strconv"
-
-	"github.com/goburrow/modbus"
 )
 
-func WriteTagSlave(client modbus.Client, tag *models.Tag, value interface{}) error {
+func WriteTagSlave(client modbusSlaveClient, tag *models.Tag, value interface{}) error {
 	if tag == nil {
 		return fmt.Errorf("tag vazia")
 	}
@@ -42,7 +40,7 @@ func WriteTagSlave(client modbus.Client, tag *models.Tag, value interface{}) err
 	}
 }
 
-func WriteTagsSlave(client modbus.Client, tags []*models.Tag, value interface{}) error {
+func WriteTagsSlave(client modbusSlaveClient, tags []*models.Tag, value interface{}) error {
 	validTags := make([]*models.Tag, 0, len(tags))
 	for _, tag := range tags {
 		if tag != nil {
@@ -80,7 +78,7 @@ func WriteTagsSlave(client modbus.Client, tags []*models.Tag, value interface{})
 	return nil
 }
 
-func writeCoilTagsSlave(client modbus.Client, tags []*models.Tag, valuesByTag map[uint]interface{}) error {
+func writeCoilTagsSlave(client modbusSlaveClient, tags []*models.Tag, valuesByTag map[uint]interface{}) error {
 	blocks := createReadSlaveInBlocks(tags, maxCoilsPerRead, quantityBitsTagsSlave)
 	for _, block := range blocks {
 		quantityBits := block.endExclusive - block.start
@@ -128,7 +126,7 @@ func writeCoilTagsSlave(client modbus.Client, tags []*models.Tag, valuesByTag ma
 	return nil
 }
 
-func writeRegisterTagsSlave(client modbus.Client, tags []*models.Tag, valuesByTag map[uint]interface{}) error {
+func writeRegisterTagsSlave(client modbusSlaveClient, tags []*models.Tag, valuesByTag map[uint]interface{}) error {
 	blocks := createReadSlaveInBlocks(tags, maxRegistersPerRead, quantityRegistersTagsSlave)
 	for _, block := range blocks {
 		quantityRegisters := block.endExclusive - block.start

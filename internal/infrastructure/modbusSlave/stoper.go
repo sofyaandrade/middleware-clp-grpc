@@ -3,13 +3,11 @@ package modbusSlave
 import (
 	"middleware/internal/domain/models"
 	"middleware/internal/infrastructure/jobs"
-
-	"github.com/goburrow/modbus"
 )
 
-func (s *Service) unregisterCLP(clp models.CLP, channel chan CommandSlave, handler *modbus.TCPClientHandler) {
-	if handler != nil {
-		handler.Close()
+func (s *Service) unregisterCLP(clp models.CLP, channel chan CommandSlave, server *slaveTCPServer) {
+	if server != nil {
+		server.Close()
 	}
 
 	s.mu.Lock()
