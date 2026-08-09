@@ -17,6 +17,7 @@ func UserRoute(db *gorm.DB, group *gin.RouterGroup) {
 	group.POST("/", uc.NewUser)
 	group.GET("/", uc.SearchAllUsers)
 	group.GET("/:id/", uc.SearchUserById)
+	group.PATCH("/password/", uc.ChangePassword)
 	group.PATCH("/:id/", uc.UpdateUser)
 	group.DELETE("/:id/", uc.DeleteUser)
 }

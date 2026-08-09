@@ -34,6 +34,12 @@ func (ur *userRepository) SearchUserById(id uint) (*models.User, error) {
 	return user, err
 }
 
+func (ur *userRepository) SearchUserByIdWithPassword(id uint) (*models.User, error) {
+	var user models.User
+	err := ur.database.First(&user, id).Error
+	return &user, err
+}
+
 func (ur *userRepository) SearchUserByEmail(email string) (*models.User, error) {
 	var user *models.User
 	err := ur.database.Where(models.User{Email: email}).First(&user).Error
