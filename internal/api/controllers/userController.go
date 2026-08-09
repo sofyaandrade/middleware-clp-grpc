@@ -27,12 +27,12 @@ func (uc *UserController) NewUser(c *gin.Context) {
 
 	user, err := uc.UserUsecase.SearchUserByEmail(users.Email)
 
-	if err.Error() != erroUserNaoEncontrado {
+	if err != nil && err.Error() != erroUserNaoEncontrado {
 		c.JSON(http.StatusBadRequest, "not.found")
 		return
 	}
 
-	if user.Email != "" {
+	if err == nil && user.Email != "" {
 		c.JSON(http.StatusBadRequest, "email.alredy.used")
 		return
 	}

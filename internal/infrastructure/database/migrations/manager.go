@@ -15,6 +15,7 @@ func RunMigrations(db *gorm.DB) {
 	} else {
 		dbInstance = db.Debug()
 	}
+	dbInstance.AutoMigrate(&models.PermissoesAcesso{})
 	dbInstance.AutoMigrate(&models.User{})
 	dbInstance.AutoMigrate(&models.CLP{})
 	dbInstance.AutoMigrate(&models.TypeClp{})
@@ -22,4 +23,5 @@ func RunMigrations(db *gorm.DB) {
 	dbInstance.AutoMigrate(&models.TypeTag{})
 	dbInstance.AutoMigrate(&models.TypeOperation{})
 	dbInstance.AutoMigrate(&models.Swap{})
+	dbInstance.AutoMigrate(&models.UserProfile{})
 }
