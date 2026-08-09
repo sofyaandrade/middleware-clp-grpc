@@ -24,13 +24,13 @@ func (ur *userRepository) CreateUser(user *models.User) error {
 
 func (ur *userRepository) SearchAllUsers() (*[]models.User, error) {
 	var user *[]models.User
-	err := ur.database.Select("id", "name", "email").Find(&user).Error
+	err := ur.database.Select("id", "name", "email", "phone", "permission").Find(&user).Error
 	return user, err
 }
 
 func (ur *userRepository) SearchUserById(id uint) (*models.User, error) {
 	var user *models.User
-	err := ur.database.Select("id", "name", "email").First(&user, id).Error
+	err := ur.database.Select("id", "name", "email", "phone", "permission").First(&user, id).Error
 	return user, err
 }
 

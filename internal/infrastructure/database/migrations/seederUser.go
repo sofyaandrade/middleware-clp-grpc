@@ -9,9 +9,10 @@ import (
 
 var listaUser = []models.User{
 	{
-		Name:     "adm",
-		Email:    "adm",
-		Password: "$2a$10$9RL6Ktc0tE3eSPiIA7x9g.AD9A6uW.CT4LcmQPU5jHL6HU5GR23UW",
+		Name:       "adm",
+		Email:      "adm",
+		Permission: "ADMINISTRADOR",
+		Password:   "$2a$10$9RL6Ktc0tE3eSPiIA7x9g.AD9A6uW.CT4LcmQPU5jHL6HU5GR23UW",
 	},
 }
 

@@ -22,10 +22,14 @@ func CreateAcessToken(usuario *models.User) (accessToken string, err error) {
 	expiry := float64(24)
 	secretAccesKey := viper.GetString("ACCESS_TOKEN")
 	emissor := "middleware"
+	role := usuario.Permission
+	if role == "" {
+		role = usuario.Name
+	}
 
 	claims := &models.JwtCustomClaims{
 		ID:   usuario.ID,
-		Role: usuario.Name,
+		Role: role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTimeFromHours(expiry).Unix(),
 			Issuer:    emissor,

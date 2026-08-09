@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func UsuarioRouter(db *gorm.DB, group *gin.RouterGroup) {
+func UserRoute(db *gorm.DB, group *gin.RouterGroup) {
 	ur := repository.NewUserRepository(db)
 	uc := &controllers.UserController{
 		UserUsecase: usecase.NewUserUsecase(ur),

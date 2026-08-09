@@ -28,6 +28,7 @@ func InitializeDatabase() *gorm.DB {
 	migrations.InitializeSwaps(db)
 	migrations.InitializeTypesOperation(db)
 	migrations.InitializeTypesTag(db)
+	migrations.InitializeBasicUserProfile(db)
 
 	return db
 }
