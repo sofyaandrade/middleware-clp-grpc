@@ -7,7 +7,7 @@ import (
 )
 
 var admPolicy = [][]string{
-	{"ADM", "/*", "(GET)|(POST)|(PATCH)|(DELETE)|(PUT)|(OPTIONS)"},
+	{"ADMINISTRADOR", "/*", "(GET)|(POST)|(PATCH)|(DELETE)|(PUT)|(OPTIONS)"},
 }
 
 func InicializaPermissoesAcesso(enforcer *casbin.Enforcer) {

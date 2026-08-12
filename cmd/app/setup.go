@@ -49,6 +49,9 @@ func InitializeProject() {
 	clpManager.Start(appCtx, &jobsWG)
 
 	enforcer := AccessPermissionsConfig(db)
+	if enforcer == nil {
+		log.Fatal("Erro ao inicializar permissões de acesso")
+	}
 	reloadNotifier := reloadNotifierGroup{
 		modbusMasterService,
 		modbusSlaveService,
