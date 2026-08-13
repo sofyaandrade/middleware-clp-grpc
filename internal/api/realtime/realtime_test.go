@@ -5,6 +5,8 @@ import (
 	"middleware/internal/domain/models"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func TestSendChangesSendsInitialSnapshotAndOnlyChangedValues(t *testing.T) {
@@ -76,5 +78,51 @@ func TestNewTagValueIncludesQualityAndLastSuccessfulRead(t *testing.T) {
 	}
 	if message.GetLastSuccessfulReadUnixNano() != readAt.UnixNano() {
 		t.Fatalf("last successful read = %d, want %d", message.GetLastSuccessfulReadUnixNano(), readAt.UnixNano())
+	}
+}
+
+func TestGetTagsSnapshotReturnsAllTagsAndGroupedEquipments(t *testing.T) {
+	readAt := time.Unix(170, 99)
+	server := newRealtimeTagServer(func() (map[uint]map[uint]models.TagState, error) {
+		return map[uint]map[uint]models.TagState{
+			2: {
+				20: {Value: true, Quality: models.TagQualityGood, LastSuccessfulRead: readAt},
+			},
+			1: {
+				10: {Value: int16(-7), Quality: models.TagQualityStale},
+				11: {Value: float32(12.5), Quality: models.TagQualityBad, LastSuccessfulRead: readAt},
+			},
+		}, nil
+	}, defaultSnapshotInterval)
+
+	payload, err := server.GetTagsSnapshot(t.Context(), &emptypb.Empty{})
+	if err != nil {
+		t.Fatalf("GetTagsSnapshot() error = %v", err)
+	}
+
+	allTags := payload.Fields["all_tags"].GetListValue().GetValues()
+	if len(allTags) != 3 {
+		t.Fatalf("all_tags count = %d, want 3", len(allTags))
+	}
+
+	equipments := payload.Fields["equipments"].GetListValue().GetValues()
+	if len(equipments) != 2 {
+		t.Fatalf("equipments count = %d, want 2", len(equipments))
+	}
+
+	firstEquipment := equipments[0].GetStructValue().GetFields()
+	if firstEquipment["equipment_id"].GetNumberValue() != 1 {
+		t.Fatalf("first equipment id = %v, want 1", firstEquipment["equipment_id"].GetNumberValue())
+	}
+	if firstEquipment["tag_count"].GetNumberValue() != 2 {
+		t.Fatalf("first equipment tag_count = %v, want 2", firstEquipment["tag_count"].GetNumberValue())
+	}
+
+	firstTag := firstEquipment["tags"].GetListValue().GetValues()[0].GetStructValue().GetFields()
+	if firstTag["tag_id"].GetNumberValue() != 10 {
+		t.Fatalf("first grouped tag id = %v, want 10", firstTag["tag_id"].GetNumberValue())
+	}
+	if firstTag["quality"].GetStringValue() != "STALE" {
+		t.Fatalf("first grouped tag quality = %q, want STALE", firstTag["quality"].GetStringValue())
 	}
 }

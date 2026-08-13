@@ -21,7 +21,9 @@ func GRPCConfig(ctx context.Context) error {
 	}
 
 	server := grpc.NewServer()
-	realtimev1.RegisterRealtimeTagServiceServer(server, grpcserver.NewRealtimeTagServer())
+	realtimeServer := grpcserver.NewRealtimeTagServer()
+	realtimev1.RegisterRealtimeTagServiceServer(server, realtimeServer)
+	grpcserver.RegisterRealtimeTagCatalogServiceServer(server, realtimeServer)
 	serveError := make(chan error, 1)
 	go func() { serveError <- server.Serve(listener) }()
 
