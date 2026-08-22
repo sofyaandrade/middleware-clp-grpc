@@ -9,6 +9,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -20,7 +21,11 @@ func GRPCConfig(ctx context.Context) error {
 		return fmt.Errorf("falha ao escutar em %s: %w", grpcServerAddress, err)
 	}
 
-	server := grpc.NewServer()
+	secretKey := viper.GetString("ACCESS_TOKEN")
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpcserver.UnaryAuthInterceptor(secretKey)),
+		grpc.StreamInterceptor(grpcserver.StreamAuthInterceptor(secretKey)),
+	)
 	realtimeServer := grpcserver.NewRealtimeTagServer()
 	realtimev1.RegisterRealtimeTagServiceServer(server, realtimeServer)
 	grpcserver.RegisterRealtimeTagCatalogServiceServer(server, realtimeServer)
