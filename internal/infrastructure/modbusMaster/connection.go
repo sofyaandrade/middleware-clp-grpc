@@ -3,6 +3,7 @@ package modbusmaster
 import (
 	"context"
 	"fmt"
+	"middleware/internal/domain/constants"
 	"middleware/internal/domain/conversion"
 	"middleware/internal/domain/interfaces"
 	"middleware/internal/domain/models"
@@ -83,7 +84,7 @@ func (s *Service) RequestCLPReload(clpID uint) {
 }
 
 func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
 	s.syncCLPs(ctx, wg)
@@ -102,7 +103,7 @@ func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *Service) syncCLPs(ctx context.Context, wg *sync.WaitGroup) {
-	clps, err := s.repository.SearchClpByType(1)
+	clps, err := s.repository.SearchClpByType(constants.MODBUS_MASTER)
 	if err != nil {
 		return
 	}
@@ -173,7 +174,6 @@ RETRY:
 
 		err := ConnectWithRetry(ctx, handler)
 		if err != nil {
-			//logar o erro
 			jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 			jobs.MarkCLPUnavailable(clp.ID)
 

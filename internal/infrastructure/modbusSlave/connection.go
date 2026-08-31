@@ -81,7 +81,7 @@ func (s *Service) RequestCLPReload(clpID uint) {
 }
 
 func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
 	s.syncCLPs(ctx, wg)
