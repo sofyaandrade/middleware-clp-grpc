@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"fmt"
+	"middleware/internal/domain/constants"
 	"middleware/internal/domain/models"
 
 	"gorm.io/gorm"
@@ -9,26 +10,27 @@ import (
 
 var listaUserProfile = []models.UserProfile{
 	{
-		Description: "ADMINISTRADOR",
+		Description: constants.UserProfileAdministrador,
 	},
 	{
-		Description: "OPERADOR",
+		Description: constants.UserProfileOperador,
+	},
+	{
+		Description: constants.UserProfileConsumidor,
 	},
 }
 
 func InitializeBasicUserProfile(db *gorm.DB) {
-	var used []models.UserProfile
-
-	err := db.Find(&used).Error
-
-	if err != nil {
-		fmt.Println("não foi possível localizar a tabela perfis de usuário: ", err)
-	}
-	if len(used) == 0 {
-		for i := range listaUserProfile {
-			err := db.Debug().Model(&models.UserProfile{}).Create(&listaUserProfile[i]).Error
-			if err != nil {
-				fmt.Println("não foi possível inserir perfis de usuário na tabela: ", err)
+	for i := range listaUserProfile {
+		var userProfile models.UserProfile
+		result := db.Where("description = ?", listaUserProfile[i].Description).Limit(1).Find(&userProfile)
+		if result.Error != nil {
+			fmt.Println("nao foi possivel localizar perfil de usuario na tabela: ", result.Error)
+			continue
+		}
+		if result.RowsAffected == 0 {
+			if err := db.Debug().Model(&models.UserProfile{}).Create(&listaUserProfile[i]).Error; err != nil {
+				fmt.Println("nao foi possivel inserir perfil de usuario na tabela: ", err)
 			}
 		}
 	}

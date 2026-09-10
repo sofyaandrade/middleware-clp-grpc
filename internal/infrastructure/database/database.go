@@ -16,7 +16,7 @@ func InitializeDatabase() *gorm.DB {
 
 	db, err := gorm.Open(sqlite.Open(filepath.Join(pathDir, constants.DB_NAME)), &gorm.Config{})
 	if err != nil {
-		fmt.Printf("Nao foi possivel conectar com o banco de dados: %v", err)
+		fmt.Printf("Não foi possível conectar com o banco de dados: %v", err)
 	} else {
 		fmt.Printf("Banco conectado com sucesso")
 	}

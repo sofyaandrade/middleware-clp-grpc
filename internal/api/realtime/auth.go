@@ -3,6 +3,8 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	realtimev1 "middleware/api/realtime/v1"
+	"middleware/internal/domain/constants"
 	"middleware/internal/domain/security"
 	"strings"
 
@@ -21,6 +23,11 @@ const (
 	contextUserRoleKey       = contextKey("grpc.user.role")
 )
 
+var grpcConsumptionMethods = map[string]struct{}{
+	realtimev1.RealtimeTagService_StreamTagValues_FullMethodName: {},
+	RealtimeTagCatalogService_GetTagsSnapshot_FullMethodName:     {},
+}
+
 func UnaryAuthInterceptor(secretKey string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -31,6 +38,9 @@ func UnaryAuthInterceptor(secretKey string) grpc.UnaryServerInterceptor {
 		authenticatedContext, err := authenticateContext(ctx, secretKey)
 		if err != nil {
 			return nil, annotateUnauthenticatedError(info.FullMethod, err)
+		}
+		if err := authorizeGRPCMethod(authenticatedContext, info.FullMethod); err != nil {
+			return nil, err
 		}
 
 		return handler(authenticatedContext, req)
@@ -47,6 +57,9 @@ func StreamAuthInterceptor(secretKey string) grpc.StreamServerInterceptor {
 		authenticatedContext, err := authenticateContext(stream.Context(), secretKey)
 		if err != nil {
 			return annotateUnauthenticatedError(info.FullMethod, err)
+		}
+		if err := authorizeGRPCMethod(authenticatedContext, info.FullMethod); err != nil {
+			return err
 		}
 
 		wrappedStream := &authenticatedServerStream{
@@ -121,6 +134,23 @@ func bearerTokenFromContext(ctx context.Context) (string, error) {
 	}
 
 	return parts[1], nil
+}
+
+func authorizeGRPCMethod(ctx context.Context, method string) error {
+	role, _ := UserRoleFromContext(ctx)
+	normalizedRole := strings.ToUpper(role)
+
+	if normalizedRole == constants.UserProfileAdministrador {
+		return nil
+	}
+
+	if normalizedRole == constants.UserProfileConsumidor {
+		if _, ok := grpcConsumptionMethods[method]; ok {
+			return nil
+		}
+	}
+
+	return status.Errorf(codes.PermissionDenied, "perfil %s sem permissao para chamada %s", normalizedRole, method)
 }
 
 func annotateUnauthenticatedError(method string, err error) error {

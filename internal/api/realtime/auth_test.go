@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"context"
+	realtimev1 "middleware/api/realtime/v1"
 	"testing"
 	"time"
 
@@ -36,6 +37,69 @@ func TestAuthenticateContextStoresUserClaims(t *testing.T) {
 	}
 }
 
+func TestUnaryAuthInterceptorRejectsOperatorRole(t *testing.T) {
+	const secretKey = "grpc-test-secret"
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(
+		authorizationMetadataKey,
+		"Bearer "+signedTestToken(t, secretKey, 7, "OPERADOR"),
+	))
+	interceptor := UnaryAuthInterceptor(secretKey)
+
+	_, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{
+		FullMethod: RealtimeTagCatalogService_GetTagsSnapshot_FullMethodName,
+	}, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "ok", nil
+	})
+
+	if status.Code(err) != codes.PermissionDenied {
+		t.Fatalf("status.Code(err) = %v, want %v", status.Code(err), codes.PermissionDenied)
+	}
+}
+
+func TestUnaryAuthInterceptorAllowsAdminRole(t *testing.T) {
+	const secretKey = "grpc-test-secret"
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(
+		authorizationMetadataKey,
+		"Bearer "+signedTestToken(t, secretKey, 7, "ADMINISTRADOR"),
+	))
+	interceptor := UnaryAuthInterceptor(secretKey)
+
+	response, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{
+		FullMethod: RealtimeTagCatalogService_GetTagsSnapshot_FullMethodName,
+	}, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "ok", nil
+	})
+
+	if err != nil {
+		t.Fatalf("interceptor() error = %v", err)
+	}
+	if response != "ok" {
+		t.Fatalf("response = %v, want ok", response)
+	}
+}
+
+func TestConsumerRoleOnlyAllowsConsumptionMethods(t *testing.T) {
+	const secretKey = "grpc-test-secret"
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(
+		authorizationMetadataKey,
+		"Bearer "+signedTestToken(t, secretKey, 7, "CONSUMIDOR"),
+	))
+	interceptor := UnaryAuthInterceptor(secretKey)
+
+	_, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{
+		FullMethod: "/middleware.realtime.v1.AdminService/DeleteSomething",
+	}, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "ok", nil
+	})
+
+	if status.Code(err) != codes.PermissionDenied {
+		t.Fatalf("status.Code(err) = %v, want %v", status.Code(err), codes.PermissionDenied)
+	}
+}
+
 func TestUnaryAuthInterceptorRejectsMissingToken(t *testing.T) {
 	interceptor := UnaryAuthInterceptor("grpc-test-secret")
 
@@ -61,7 +125,7 @@ func TestStreamAuthInterceptorInjectsAuthenticatedContext(t *testing.T) {
 
 	interceptor := StreamAuthInterceptor(secretKey)
 	err := interceptor(nil, stream, &grpc.StreamServerInfo{
-		FullMethod:     "/middleware.realtime.v1.RealtimeTagService/StreamTagValues",
+		FullMethod:     realtimev1.RealtimeTagService_StreamTagValues_FullMethodName,
 		IsServerStream: true,
 		IsClientStream: false,
 	}, func(srv interface{}, serverStream grpc.ServerStream) error {
