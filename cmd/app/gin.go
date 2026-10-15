@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/casbin/casbin/v3"
-	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -41,23 +40,54 @@ func GinConfigFront() error {
 	}
 
 	exeDir := filepath.Dir(exePath)
-	absPath := filepath.Join(exeDir, "build")
-
-	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-		fmt.Printf("Pasta do front-end nao encontrada em %s. Iniciando apenas a API.\n", absPath)
+	absPath, err := findFrontendBuildDir(exeDir)
+	if err != nil {
+		fmt.Println(err)
 		return nil
-	} else if err != nil {
-		return err
 	}
 
-	frontEndPort := fmt.Sprintf(":%d", 2910) //api port
+	frontEndPort := fmt.Sprintf(":%d", 2910)
 	ginFrontEnd := gin.Default()
 
-	ginFrontEnd.Use(static.Serve("/", static.LocalFile(absPath, true)))
+	ginFrontEnd.Static("/assets", filepath.Join(absPath, "assets"))
+	ginFrontEnd.GET("/", func(c *gin.Context) {
+		c.File(filepath.Join(absPath, "index.html"))
+	})
+	ginFrontEnd.NoRoute(func(c *gin.Context) {
+		requestedPath := filepath.Clean("." + c.Request.URL.Path)
+		filePath := filepath.Join(absPath, requestedPath)
+
+		if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
+			c.File(filePath)
+			return
+		}
+
+		c.File(filepath.Join(absPath, "index.html"))
+	})
+
 	if err := ginFrontEnd.Run(frontEndPort); err != nil {
 		fmt.Println("")
 		return err
 	}
 
 	return nil
+}
+
+func findFrontendBuildDir(exeDir string) (string, error) {
+	candidates := []string{
+		filepath.Join(exeDir, "dist"),
+		filepath.Join(exeDir, "build"),
+	}
+
+	for _, candidate := range candidates {
+		indexPath := filepath.Join(candidate, "index.html")
+		if info, err := os.Stat(indexPath); err == nil && !info.IsDir() {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf(
+		"Pasta do front-end nao encontrada. Coloque a pasta dist ao lado do executavel em %s. Iniciando apenas a API.",
+		filepath.Join(exeDir, "dist"),
+	)
 }

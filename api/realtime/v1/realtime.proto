@@ -4,9 +4,7 @@ package middleware.realtime.v1;
 
 option go_package = "middleware/api/realtime/v1;realtimev1";
 
-// RealtimeTagService exposes the latest values read from the PLCs.
 service RealtimeTagService {
-  // StreamTagValues sends the current cache and then only values that change.
   rpc StreamTagValues(StreamTagValuesRequest) returns (stream TagValue);
 }
 
@@ -33,6 +31,5 @@ message TagValue {
   }
 
   TagQuality quality = 9;
-  // Zero means that this tag has never been read successfully.
   int64 last_successful_read_unix_nano = 10;
 }
