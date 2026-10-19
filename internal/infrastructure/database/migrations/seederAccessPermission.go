@@ -9,16 +9,32 @@ import (
 
 var accessPolicies = [][]string{
 	{constants.UserProfileAdministrador, "/*", "(GET)|(POST)|(PATCH)|(DELETE)|(PUT)|(OPTIONS)"},
-	{constants.UserProfileOperador, "/clps", "(POST)|(PATCH)|(DELETE)"},
-	{constants.UserProfileOperador, "/clps/*", "(POST)|(PATCH)|(DELETE)"},
-	{constants.UserProfileOperador, "/tags", "(POST)|(PATCH)|(DELETE)"},
-	{constants.UserProfileOperador, "/tags/*", "(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/clps", "(GET)|(PATCH)"},
+	{constants.UserProfileOperador, "/clps/*", "(GET)|(PATCH)"},
+	{constants.UserProfileOperador, "/tags", "(GET)|(PATCH)"},
+	{constants.UserProfileOperador, "/tags/*", "(GET)|(PATCH)"},
+	{constants.UserProfileOperador, "/type-clps", "GET"},
+	{constants.UserProfileOperador, "/type-clps/", "GET"},
+	{constants.UserProfileOperador, "/type-tags", "GET"},
+	{constants.UserProfileOperador, "/type-tags/", "GET"},
+	{constants.UserProfileOperador, "/type-operations", "GET"},
+	{constants.UserProfileOperador, "/type-operations/", "GET"},
+	{constants.UserProfileOperador, "/swaps", "GET"},
+	{constants.UserProfileOperador, "/swaps/", "GET"},
 	{constants.UserProfileOperador, "/users/password", "PATCH"},
 	{constants.UserProfileOperador, "/users/password/", "PATCH"},
 }
 
 var legacyAccessPolicies = [][]string{
+	{constants.UserProfileOperador, "/clps", "(GET)|(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/clps/*", "(GET)|(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/tags", "(GET)|(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/tags/*", "(GET)|(POST)|(PATCH)|(DELETE)"},
 	{constants.UserProfileAdmLegacy, "/*", "(GET)|(POST)|(PATCH)|(DELETE)|(PUT)|(OPTIONS)"},
+	{constants.UserProfileOperador, "/clps", "(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/clps/*", "(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/tags", "(POST)|(PATCH)|(DELETE)"},
+	{constants.UserProfileOperador, "/tags/*", "(POST)|(PATCH)|(DELETE)"},
 }
 
 func InicializaPermissoesAcesso(enforcer *casbin.Enforcer) {

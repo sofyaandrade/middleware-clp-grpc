@@ -36,7 +36,7 @@ func AccessPermissions(secretKey string, enforcer *casbin.Enforcer) gin.HandlerF
 		}
 
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, "Unauthorized")
+			c.AbortWithStatusJSON(http.StatusForbidden, "Forbidden")
 			return
 		}
 
