@@ -36,7 +36,7 @@ func parseValueByTypeSlave(raw []byte, tag *models.Tag) (interface{}, error) {
 		if len(raw) < 4 {
 			return nil, fmt.Errorf("tag %d real precisa de 4 bytes", tag.ID)
 		}
-		value := applySwapSlave(raw[:4], tag.Swap.Description)
+		value := applySwapSlave(raw[:4], tag.Swap.OrderSwap)
 		return math.Float32frombits(binary.BigEndian.Uint32(value)), nil
 	case 2:
 		if len(raw) < 2 {
@@ -52,7 +52,7 @@ func parseValueByTypeSlave(raw []byte, tag *models.Tag) (interface{}, error) {
 		if len(raw) < 4 {
 			return nil, fmt.Errorf("tag %d dword precisa de 4 bytes", tag.ID)
 		}
-		value := applySwapSlave(raw[:4], tag.Swap.Description)
+		value := applySwapSlave(raw[:4], tag.Swap.OrderSwap)
 		return binary.BigEndian.Uint32(value), nil
 	default:
 		if len(raw) < 2 {
@@ -75,7 +75,7 @@ func rawRegistersValueByTypeSlave(value interface{}, tag *models.Tag) ([]byte, u
 		}
 		raw := make([]byte, 4)
 		binary.BigEndian.PutUint32(raw, math.Float32bits(float32(floatValue)))
-		return applySwapSlave(raw, tag.Swap.Description), 2, nil
+		return applySwapSlave(raw, tag.Swap.OrderSwap), 2, nil
 	case 2:
 		intValue, err := int64ValueSlave(value)
 		if err != nil {
@@ -107,7 +107,7 @@ func rawRegistersValueByTypeSlave(value interface{}, tag *models.Tag) ([]byte, u
 		}
 		raw := make([]byte, 4)
 		binary.BigEndian.PutUint32(raw, uint32(uintValue))
-		return applySwapSlave(raw, tag.Swap.Description), 2, nil
+		return applySwapSlave(raw, tag.Swap.OrderSwap), 2, nil
 	default:
 		uintValue, err := uint64ValueSlave(value)
 		if err != nil {

@@ -152,6 +152,7 @@ func (s *Service) reloadCLPIfNeeded(ctx context.Context, wg *sync.WaitGroup, clp
 
 func (s *Service) runCLP(ctx context.Context, clp models.CLP, channel chan CommandMaster) {
 	var handler *modbus.TCPClientHandler
+	jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 	initializeCLPTagCache(clp)
 	defer func() {
 		s.unregisterCLP(clp, channel, handler)
