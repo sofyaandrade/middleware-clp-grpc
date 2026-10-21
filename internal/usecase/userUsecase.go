@@ -27,6 +27,10 @@ func (uu *userUsecase) SearchUserById(id uint) (*models.User, error) {
 	return uu.usuarioRepository.SearchUserById(id)
 }
 
+func (uu *userUsecase) SearchUserByIdWithPassword(id uint) (*models.User, error) {
+	return uu.usuarioRepository.SearchUserByIdWithPassword(id)
+}
+
 func (uu *userUsecase) SearchUserByEmail(email string) (*models.User, error) {
 	return uu.usuarioRepository.SearchUserByEmail(email)
 }

@@ -26,23 +26,35 @@ m = r.sub == p.sub && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act)
 `
 
 func AccessPermissionsConfig(db *gorm.DB) *casbin.Enforcer {
+	if db == nil {
+		fmt.Println("error.inicialize.casbin database connection is nil")
+		return nil
+	}
+
+	gormadapter.TurnOffAutoMigrate(db)
 
 	adapter, err := gormadapter.NewAdapterByDBWithCustomTable(db, &models.PermissoesAcesso{}, "permissoes_acesso")
 	if err != nil {
 		fmt.Println("error.inicialize.casbin " + err.Error())
+		return nil
 	}
 
 	model, err := model.NewModelFromString(rbacModel)
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil
 	}
 
 	enforcer, err := casbin.NewEnforcer(model, adapter)
 	if err != nil {
 		fmt.Println("error.inicialize.casbin" + err.Error())
+		return nil
 	}
 
-	enforcer.LoadPolicy()
+	if err := enforcer.LoadPolicy(); err != nil {
+		fmt.Println("error.inicialize.casbin " + err.Error())
+		return nil
+	}
 
 	migrations.InicializaPermissoesAcesso(enforcer)
 

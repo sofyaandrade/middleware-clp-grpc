@@ -22,48 +22,6 @@ The middleware exposes a REST API for managing PLCs and their tags while running
 - **Layered backend design:** HTTP routes, controllers, use cases, repositories, domain models, and infrastructure concerns are separated.
 - **API security:** JWT access and refresh tokens, bcrypt password hashing, and Casbin-based RBAC.
 
-## Architecture
-
-```text
-                         +---------------------+
-                         |   REST API Client   |
-                         +----------+----------+
-                                    |
-                                    v
-                         +---------------------+
-                         |      Gin API        |
-                         | JWT + Casbin RBAC   |
-                         +----------+----------+
-                                    |
-                   +----------------+----------------+
-                   |                                 |
-                   v                                 v
-        +----------------------+          +----------------------+
-        | Application Layers   |          | Real-Time Endpoints  |
-        | Controller / Usecase |          | Tags / PLC Status    |
-        | Repository           |          +----------+-----------+
-        +----------+-----------+                     |
-                   |                                 v
-                   v                      +----------------------+
-        +----------------------+          | Concurrent Cache     |
-        | SQLite + GORM        |          | sync.Map + Mutex     |
-        +----------+-----------+          +----------+-----------+
-                   |                                 ^
-                   | configuration changes           |
-                   v                                 |
-        +----------------------+                     |
-        | PLC Manager          |---------------------+
-        | Goroutine per PLC    |
-        | Buffered Channels    |
-        +----------+-----------+
-                   |
-                   v
-        +----------------------+
-        | Modbus TCP Devices   |
-        | Coils and Registers  |
-        +----------------------+
-```
-
 ## Concurrency Model
 
 The Modbus service maintains isolated runtime resources for every configured PLC:

@@ -68,7 +68,7 @@ func (tu *TagUsecase) ExistTagWithId(id uint) error {
 	return tu.TagReposiotry.ExistTagWithId(id)
 }
 
-func (tu *TagUsecase) TagsRealTime() (map[uint]map[uint]interface{}, error) {
+func (tu *TagUsecase) TagsRealTime() (map[uint]map[uint]models.TagState, error) {
 	return jobs.ReadAllTagsRealTime()
 }
 

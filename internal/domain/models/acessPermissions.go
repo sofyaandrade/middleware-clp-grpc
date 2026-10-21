@@ -10,3 +10,7 @@ type PermissoesAcesso struct {
 	V4    string `gorm:"size:512;uniqueIndex:unique_index"`
 	V5    string `gorm:"size:512;uniqueIndex:unique_index"`
 }
+
+func (PermissoesAcesso) TableName() string {
+	return "permissoes_acesso"
+}

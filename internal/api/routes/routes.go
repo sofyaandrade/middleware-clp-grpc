@@ -24,9 +24,9 @@ func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforc
 	protectedEquipamentoRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
 	ClpRoute(db, protectedEquipamentoRouter, reloadNotifier)
 
-	protectedUsuariosRouter := router.Group("/users")
-	protectedUsuariosRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
-	UsuarioRouter(db, protectedUsuariosRouter)
+	protectedUsersRouter := router.Group("/users")
+	protectedUsersRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
+	UserRoute(db, protectedUsersRouter)
 
 	protectedTagRouter := router.Group("/tags")
 	protectedTagRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
@@ -47,4 +47,8 @@ func RouteConfiguration(db *gorm.DB, router *gin.Engine, enforcer *casbin.Enforc
 	protectedTypeOperationRouter := router.Group("/type-operations")
 	protectedTypeOperationRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
 	TypeOperationRoute(db, protectedTypeOperationRouter)
+
+	protectedUserProfileRouter := router.Group("/user-profiles")
+	protectedUserProfileRouter.Use(middlewares.JwtAuthMiddleware(secretKey))
+	UserProfileRoute(db, protectedUserProfileRouter)
 }
