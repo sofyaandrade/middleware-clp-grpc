@@ -17,7 +17,7 @@ func (mc *TypeClpController) SearchAllTypeClps(c *gin.Context) {
 
 	clpList, err := mc.TypeClpUsecase.SearchAllTypeClps()
 	if err != nil {
-		fmt.Println("error.seacrh")
+		fmt.Println("Não foi possível buscar os tipos de CLP.")
 		return
 	}
 

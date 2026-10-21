@@ -19,7 +19,7 @@ func (tc TagController) NewTag(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&tag)
 	if err != nil {
-		fmt.Println("error.json")
+		fmt.Println("Dados da requisição inválidos.")
 		return
 	}
 
@@ -29,7 +29,7 @@ func (tc TagController) NewTag(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, "create.success")
+	c.JSON(http.StatusOK, "Cadastro realizado com sucesso.")
 }
 
 func (tc TagController) SearchTagById(c *gin.Context) {
@@ -37,7 +37,7 @@ func (tc TagController) SearchTagById(c *gin.Context) {
 
 	tag, err := tc.TagUsecase.SearchTagById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("error.serach")
+		fmt.Println("Não foi possível buscar a tag.")
 		return
 	}
 
@@ -53,7 +53,7 @@ func (tc TagController) SearchAllTags(c *gin.Context) {
 
 	tagList, err := tc.TagUsecase.SearchAllTags()
 	if err != nil {
-		fmt.Println("error.search")
+		fmt.Println("Não foi possível buscar a tag.")
 		return
 	}
 
@@ -71,23 +71,23 @@ func (tc TagController) UpdateTag(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&tag)
 	if err != nil {
-		fmt.Println("error.json")
+		fmt.Println("Dados da requisição inválidos.")
 		return
 	}
 
 	_, err = tc.TagUsecase.SearchTagById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("not.exist")
+		fmt.Println("Tag não encontrada.")
 		return
 	}
 
 	err = tc.TagUsecase.UpdateTag(conversion.StringToUint(id), tag)
 	if err != nil {
-		fmt.Println("error.update")
+		fmt.Println("Não foi possível atualizar a tag.")
 		return
 	}
 
-	c.JSON(http.StatusOK, "update.sucess")
+	c.JSON(http.StatusOK, "Atualização realizada com sucesso.")
 }
 
 func (tc TagController) DeleteTag(c *gin.Context) {
@@ -95,28 +95,28 @@ func (tc TagController) DeleteTag(c *gin.Context) {
 
 	_, err := tc.TagUsecase.SearchTagById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("not.exist")
+		fmt.Println("Tag não encontrada.")
 		return
 	}
 
 	err = tc.TagUsecase.DeleteTag(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("error.delete")
+		fmt.Println("Não foi possível excluir a tag.")
 		return
 	}
 
-	c.JSON(http.StatusOK, "delete.success")
+	c.JSON(http.StatusOK, "Exclusão realizada com sucesso.")
 }
 
 func (tc TagController) TagsRealTime(c *gin.Context) {
 	Map, err := tc.TagUsecase.TagsRealTime()
 	if err != nil {
-		fmt.Println("not.exist")
+		fmt.Println("Tag não encontrada.")
 		return
 	}
 
 	if Map == nil {
-		fmt.Println("not.exist")
+		fmt.Println("Tag não encontrada.")
 		return
 	}
 

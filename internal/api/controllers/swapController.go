@@ -17,7 +17,7 @@ func (mc *SwapController) SearchAllSwaps(c *gin.Context) {
 
 	clpList, err := mc.SwapUsecase.SearchAllSwaps()
 	if err != nil {
-		fmt.Println("error.seacrh")
+		fmt.Println("Não foi possível buscar as configurações de swap.")
 		return
 	}
 

@@ -17,7 +17,7 @@ func (mc *TypeTagController) SearchAllTypeTags(c *gin.Context) {
 
 	clpList, err := mc.TypeTagUsecase.SearchAllTypeTags()
 	if err != nil {
-		fmt.Println("error.seacrh")
+		fmt.Println("Não foi possível buscar os tipos de tag.")
 		return
 	}
 

@@ -15,11 +15,11 @@ func (uc *UserProfileController) SearchAllUserProfiles(c *gin.Context) {
 
 	users, err := uc.UserProfileUsecase.SearchAllUserProfiles()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "error.search")
+		c.JSON(http.StatusBadRequest, "Não foi possível buscar os perfis de usuário.")
 		return
 	}
 	if users == nil {
-		c.JSON(http.StatusBadRequest, "not.found")
+		c.JSON(http.StatusBadRequest, "Nenhum perfil de usuário encontrado.")
 		return
 	}
 

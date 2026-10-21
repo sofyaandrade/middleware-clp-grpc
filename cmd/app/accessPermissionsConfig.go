@@ -27,7 +27,7 @@ m = r.sub == p.sub && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act)
 
 func AccessPermissionsConfig(db *gorm.DB) *casbin.Enforcer {
 	if db == nil {
-		fmt.Println("error.inicialize.casbin database connection is nil")
+		fmt.Println("Não foi possível inicializar o Casbin: conexão com o banco de dados não disponível.")
 		return nil
 	}
 
@@ -35,7 +35,7 @@ func AccessPermissionsConfig(db *gorm.DB) *casbin.Enforcer {
 
 	adapter, err := gormadapter.NewAdapterByDBWithCustomTable(db, &models.PermissoesAcesso{}, "permissoes_acesso")
 	if err != nil {
-		fmt.Println("error.inicialize.casbin " + err.Error())
+		fmt.Println("Não foi possível inicializar o Casbin: " + err.Error())
 		return nil
 	}
 
@@ -47,12 +47,12 @@ func AccessPermissionsConfig(db *gorm.DB) *casbin.Enforcer {
 
 	enforcer, err := casbin.NewEnforcer(model, adapter)
 	if err != nil {
-		fmt.Println("error.inicialize.casbin" + err.Error())
+		fmt.Println("Não foi possível inicializar o Casbin: " + err.Error())
 		return nil
 	}
 
 	if err := enforcer.LoadPolicy(); err != nil {
-		fmt.Println("error.inicialize.casbin " + err.Error())
+		fmt.Println("Não foi possível inicializar o Casbin: " + err.Error())
 		return nil
 	}
 

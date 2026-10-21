@@ -16,33 +16,33 @@ type LoginController struct {
 func (lc *LoginController) Login(c *gin.Context) {
 	var login models.Login
 	if err := c.ShouldBindJSON(&login); err != nil {
-		c.JSON(http.StatusBadRequest, "erro.json")
+		c.JSON(http.StatusBadRequest, "Dados da requisição inválidos.")
 		return
 	}
 
 	usuario, err := lc.LoginUsecase.SearchUserByEmail(login.Email)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, "not.foud.user.email")
+		c.JSON(http.StatusNotFound, "Nenhum usuário encontrado com este e-mail.")
 		return
 	}
 
 	err = security.VerificaSenha(usuario.Password, login.Password)
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "error.password.verficate")
+		c.JSON(http.StatusUnauthorized, "Senha incorreta.")
 		return
 	}
 
 	accessToken, err := lc.LoginUsecase.CreateAcessToken(usuario)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, "error.create.access.token")
+		c.JSON(http.StatusInternalServerError, "Não foi possível gerar o token de acesso.")
 		return
 	}
 
 	refreshToken, err := lc.LoginUsecase.CreateRefreshToken(usuario)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, "erroe.create.refresh.token")
+		c.JSON(http.StatusInternalServerError, "Não foi possível gerar o token de renovação.")
 		return
 	}
 

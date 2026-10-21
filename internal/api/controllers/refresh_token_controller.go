@@ -15,7 +15,7 @@ type RefreshTokenController struct {
 }
 
 const (
-	USUARIO_NAO_ENCONTRADO = "usuario.nao.encontrado"
+	USUARIO_NAO_ENCONTRADO = "Usuário não encontrado."
 )
 
 func (rtc *RefreshTokenController) RefreshToken(c *gin.Context) {
@@ -26,31 +26,31 @@ func (rtc *RefreshTokenController) RefreshToken(c *gin.Context) {
 
 	err := c.ShouldBind(&request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "error.json")
+		c.JSON(http.StatusBadRequest, "Dados da requisição inválidos.")
 		return
 	}
 
 	id, _, err := rtc.RefreshTokenUsecase.ExtractIdToken(request.RefreshToken, refreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "error.extract.id.token")
+		c.JSON(http.StatusUnauthorized, "Token de renovação inválido ou expirado.")
 		return
 	}
 
 	usuario, err := rtc.RefreshTokenUsecase.SearchUserById(conversion.StringToUint(id))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "not.found")
+		c.JSON(http.StatusUnauthorized, "Usuário não encontrado.")
 		return
 	}
 
 	accessToken, err := rtc.RefreshTokenUsecase.CreateAcessToken(usuario)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, "error.create.access.token")
+		c.JSON(http.StatusInternalServerError, "Não foi possível gerar o token de acesso.")
 		return
 	}
 
 	refreshToken, err = rtc.RefreshTokenUsecase.CreateRefreshToken(usuario)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, "error.create.refresh.token")
+		c.JSON(http.StatusInternalServerError, "Não foi possível gerar o token de renovação.")
 		return
 	}
 

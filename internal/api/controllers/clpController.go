@@ -19,17 +19,17 @@ func (mc CLPController) NewCLP(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&clp)
 	if err != nil {
-		fmt.Println("error.json")
+		fmt.Println("Dados da requisição inválidos.")
 		return
 	}
 
 	err = mc.CLPUsecase.CreateClp(clp)
 	if err != nil {
-		fmt.Println("error.create")
+		fmt.Println("Não foi possível criar o CLP.")
 		return
 	}
 
-	c.JSON(http.StatusOK, "create.success")
+	c.JSON(http.StatusOK, "Cadastro realizado com sucesso.")
 }
 
 func (mc CLPController) SearchClpById(c *gin.Context) {
@@ -37,7 +37,7 @@ func (mc CLPController) SearchClpById(c *gin.Context) {
 
 	clp, err := mc.CLPUsecase.SearchClpById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("error.search")
+		fmt.Println("Não foi possível buscar o CLP.")
 		return
 	}
 
@@ -53,7 +53,7 @@ func (mc CLPController) SearchAllClps(c *gin.Context) {
 
 	clpList, err := mc.CLPUsecase.SearchAllClps()
 	if err != nil {
-		fmt.Println("error.seacrh")
+		fmt.Println("Não foi possível buscar o CLP.")
 		return
 	}
 
@@ -92,23 +92,23 @@ func (mc CLPController) UpdateClp(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&clp)
 	if err != nil {
-		fmt.Println("error.json")
+		fmt.Println("Dados da requisição inválidos.")
 		return
 	}
 
 	_, err = mc.CLPUsecase.SearchClpById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("not.foud")
+		fmt.Println("CLP não encontrado.")
 		return
 	}
 
 	err = mc.CLPUsecase.UpdateClp(conversion.StringToUint(id), clp)
 	if err != nil {
-		fmt.Println("error.update")
+		fmt.Println("Não foi possível atualizar o CLP.")
 		return
 	}
 
-	c.JSON(http.StatusOK, "update.sucess")
+	c.JSON(http.StatusOK, "Atualização realizada com sucesso.")
 }
 
 func (mc CLPController) DeleteClp(c *gin.Context) {
@@ -116,15 +116,15 @@ func (mc CLPController) DeleteClp(c *gin.Context) {
 
 	_, err := mc.CLPUsecase.SearchClpById(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("not.exist")
+		fmt.Println("CLP não encontrado.")
 		return
 	}
 
 	err = mc.CLPUsecase.DeleteClp(conversion.StringToUint(id))
 	if err != nil {
-		fmt.Println("error.delete")
+		fmt.Println("Não foi possível excluir o CLP.")
 		return
 	}
 
-	c.JSON(http.StatusOK, "delete.success")
+	c.JSON(http.StatusOK, "Exclusão realizada com sucesso.")
 }

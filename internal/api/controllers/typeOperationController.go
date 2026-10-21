@@ -17,7 +17,7 @@ func (mc *TypeOperationController) SearchAllTypeOperations(c *gin.Context) {
 
 	clpList, err := mc.TypeOperationUsecase.SearchAllOperations()
 	if err != nil {
-		fmt.Println("error.seacrh")
+		fmt.Println("Não foi possível buscar os tipos de operação.")
 		return
 	}
 
