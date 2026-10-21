@@ -17,9 +17,6 @@ type tagStateCache struct {
 	byCLP map[uint]map[uint]models.TagState
 }
 
-// ApplyPoll atomically publishes one polling cycle. Values contains only tags
-// successfully decoded in this cycle; missing tags retain their last valid
-// value and timestamp and become STALE (or BAD if they have never succeeded).
 func ApplyPoll(clpID uint, tagIDs []uint, values map[uint]interface{}, readAt time.Time) {
 	currentTags.mu.Lock()
 	defer currentTags.mu.Unlock()
@@ -58,7 +55,6 @@ func ApplyPoll(clpID uint, tagIDs []uint, values map[uint]interface{}, readAt ti
 	}
 }
 
-// MarkCLPUnavailable changes quality without replacing any last valid value.
 func MarkCLPUnavailable(clpID uint) {
 	currentTags.mu.Lock()
 	defer currentTags.mu.Unlock()

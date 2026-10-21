@@ -174,7 +174,6 @@ RETRY:
 
 		err := ConnectWithRetry(ctx, handler)
 		if err != nil {
-			//logar o erro
 			jobs.StatusClpRealTimeSync.Store(clp.ID, false)
 			jobs.MarkCLPUnavailable(clp.ID)
 
@@ -336,7 +335,6 @@ func updateTagsClpsMaster(client modbus.Client, clpId uint, tags []*models.Tag) 
 	values, err := ReadTagsMaster(client, tags, nil)
 	jobs.ApplyPoll(clpId, tagIDs, values, time.Now())
 	if err != nil {
-		//loggar erro
 		if isConnectionError(err) {
 			jobs.StatusClpRealTimeSync.Store(clpId, false)
 		}
